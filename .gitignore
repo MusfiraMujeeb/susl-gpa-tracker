@@ -1,0 +1,13 @@
+# Secrets — NEVER commit this
+.streamlit/secrets.toml
+
+# Local test files
+test_supabase.py
+
+# Database files
+*.db
+gpa_data.db
+
+# Python cache
+__pycache__/
+*.pyc
