@@ -11,3 +11,4 @@ gpa_data.db
 # Python cache
 __pycache__/
 *.pyc
+*.lnk
