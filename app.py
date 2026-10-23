@@ -16,8 +16,8 @@ st.markdown("""
     }
     .block-container {
         padding-top: 2rem;
-        padding-bottom: 3rem;
-        max-width: 1200px;
+        padding-bottom: 4rem;
+        max-width: 1000px;
     }
 
     /* Header Styling */
@@ -26,81 +26,85 @@ st.markdown("""
         letter-spacing: -1px;
         color: #1E293B;
     }
-    
+
     /* Metric Cards */
     div[data-testid="stMetric"] {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        background: linear-gradient(145deg, #ffffff, #f3f4f6);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 5px 5px 15px rgba(0,0,0,0.05), -5px -5px 15px rgba(255,255,255,0.8);
         border: 1px solid #F1F5F9;
         text-align: center;
         transition: transform 0.2s ease;
     }
     div[data-testid="stMetric"]:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        transform: translateY(-3px);
     }
     div[data-testid="stMetricLabel"] {
-        font-size: 0.9rem !important;
-        font-weight: 600 !important;
+        font-size: 0.85rem !important;
+        font-weight: 700 !important;
         color: #64748B !important;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 1px;
     }
     div[data-testid="stMetricValue"] {
-        font-size: 2.2rem !important;
+        font-size: 2.5rem !important;
         font-weight: 800 !important;
-        color: #0F172A !important;
+        background: -webkit-linear-gradient(45deg, #3B82F6, #8B5CF6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
 
-    /* Classification Banner */
-    .class-banner {
-        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-        color: white;
-        padding: 15px 25px;
-        border-radius: 12px;
-        font-weight: 600;
-        font-size: 1.1rem;
-        display: flex;
-        align-items: center;
-        box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.4);
-        margin: 20px 0;
+    /* Glassmorphism Semester Cards (Expanders) */
+    div[data-testid="stExpander"] {
+        border: none !important;
+        border-radius: 16px !important;
+        background: rgba(255, 255, 255, 0.6) !important;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07) !important;
+        border: 1px solid rgba(255, 255, 255, 0.18) !important;
+        margin-bottom: 16px !important;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    div[data-testid="stExpander"]:hover {
+        box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.12) !important;
     }
     
-    /* Expanders (Semester Cards) */
-    div[data-testid="stExpander"] {
-        background: white;
-        border-radius: 12px !important;
-        border: 1px solid #E2E8F0 !important;
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
-        margin-bottom: 15px !important;
-        overflow: hidden;
-    }
+    /* The clickable header of the semester card */
     div[data-testid="stExpander"] summary {
-        font-weight: 600;
+        font-size: 1.05rem;
+        font-weight: 700;
         color: #1E293B;
-        padding: 10px 15px;
-        background-color: #F8FAFC;
-        border-bottom: 1px solid #E2E8F0;
+        padding: 16px 20px !important;
+        background-color: transparent !important;
+        border-left: 6px solid #6366F1; /* Indigo accent bar */
     }
     div[data-testid="stExpander"] summary:hover {
-        background-color: #F1F5F9;
+        background-color: rgba(241, 245, 249, 0.5) !important;
+    }
+    
+    /* Remove default border from inside the expander */
+    div[data-testid="stExpanderDetails"] {
+        padding: 10px 20px 20px 20px !important;
+        border-top: 1px solid rgba(0,0,0,0.05) !important;
     }
 
     /* Buttons */
     .stButton > button {
-        border-radius: 8px;
+        border-radius: 10px;
         font-weight: 600;
         border: none;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s;
     }
     .stButton > button[kind="primary"] {
-        background-color: #3B82F6;
+        background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
         color: white;
     }
     .stButton > button[kind="primary"]:hover {
-        background-color: #2563EB;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(79, 70, 229, 0.3);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -121,14 +125,6 @@ GRADE_SCALE = {
 }
 YEAR_WEIGHTS = {1: 0.2, 2: 0.3, 3: 0.3, 4: 0.2}
 PASS_MIN_GP = 2.0
-
-# --- HELPER: OFFICIAL SUSL CLASSIFICATION ---
-def get_classification(gpa):
-    if gpa >= 3.70: return "First Class"
-    elif gpa >= 3.30: return "Second Class (Upper Division)"
-    elif gpa >= 2.70: return "Second Class (Lower Division)"
-    elif gpa >= 2.00: return "Pass"
-    else: return "Not eligible"
 
 # --- SUPABASE CLIENT ---
 def get_supabase_client():
@@ -164,7 +160,7 @@ def show_auth_ui():
     
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
-        st.markdown("<div style='background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-top: 20px;'>", unsafe_allow_html=True)
+        st.markdown("<div style='background: white; padding: 30px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.08); margin-top: 20px;'>", unsafe_allow_html=True)
         tab1, tab2 = st.tabs(["🔑 Login", "✨ Sign Up"])
         with tab1:
             with st.form("login_form"):
@@ -351,7 +347,7 @@ semesters_list = sorted(semesters_dict.values(), key=lambda s: (s["year"], s["id
 col_a, col_b = st.columns([4, 1])
 with col_a:
     st.markdown(f"<h1>🎓 SUSL GPA Tracker</h1>", unsafe_allow_html=True)
-    st.markdown(f"<p style='color:#64748B; font-size:1.1rem; margin-top:-10px;'>Signed in as <b>{user.email}</b></p>", unsafe_allow_html=True)
+    st.markdown(f"<p style='color:#64748B; font-size:1.05rem; margin-top:-10px;'>Signed in as <b>{user.email}</b></p>", unsafe_allow_html=True)
 with col_b:
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🚪 Sign Out", use_container_width=True):
@@ -367,7 +363,6 @@ for sem in semesters_list:
 
 running_gpa = total_points / total_gpa_credits if total_gpa_credits > 0 else 0.0
 fgpa = calculate_fgpa(semesters_list)
-fgpa_class = get_classification(fgpa)
 
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("Running GPA", f"{running_gpa:.2f}")
@@ -375,26 +370,23 @@ c2.metric("Final GPA (FGPA)", f"{fgpa:.2f}")
 c3.metric("Earned Credits", f"{total_earned:.1f}")
 c4.metric("Pending Results", pending)
 
-# Show the FGPA classification prominently
-if fgpa > 0:
-    st.markdown(f"<div class='class-banner'>🎓 Projected Degree Classification: {fgpa_class} (FGPA: {fgpa:.2f})</div>", unsafe_allow_html=True)
-
-st.markdown("<br>", unsafe_allow_html=True)
+st.markdown("<br><br>", unsafe_allow_html=True)
 
 # --- SEMESTER EDITORS ---
 for i, sem in enumerate(semesters_list):
     sem_gpa, sem_cr, _, _ = calculate_gpa(sem["courses"])
-    sem_class = get_classification(sem_gpa) if sem_cr > 0 else "N/A"
     
-    # Formatting the expander label beautifully
-    label = f"📘 {sem['name']}  |  GPA: {sem_gpa:.2f} ({sem_class})  |  Credits: {sem_cr:.1f}"
+    # Cleaned up label (removed class text)
+    label = f"📘 {sem['name']}   |   GPA: {sem_gpa:.2f}   ·   Credits: {sem_cr:.1f}"
     
     with st.expander(label, expanded=(i < 2)):
         df = pd.DataFrame(sem["courses"])
-        for col in ["id", "code", "title", "credits", "marks", "grade", "ngpa"]:
+        # Removed "marks" from columns
+        for col in ["id", "code", "title", "credits", "grade", "ngpa"]:
             if col not in df.columns:
-                df[col] = "" if col not in ["credits", "marks"] else 0
-        display_df = df[["code", "title", "credits", "marks", "grade", "ngpa"]].copy()
+                df[col] = "" if col != "credits" else 0
+                
+        display_df = df[["code", "title", "credits", "grade", "ngpa"]].copy()
 
         edited_df = st.data_editor(
             display_df,
@@ -403,28 +395,12 @@ for i, sem in enumerate(semesters_list):
                 "code": st.column_config.TextColumn("Code", width="small"),
                 "title": st.column_config.TextColumn("Course Name", width="large"),
                 "credits": st.column_config.NumberColumn("Credits", min_value=0, step=0.5, width="small"),
-                "marks": st.column_config.NumberColumn("Marks", min_value=0, max_value=100, width="small"),
                 "grade": st.column_config.SelectboxColumn("Grade", options=["", "A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D", "E", "P"], width="small"),
                 "ngpa": st.column_config.CheckboxColumn("NGPA", width="small"),
             },
             key=f"editor_{sem['id']}",
             hide_index=True,
         )
-
-        for idx, row in edited_df.iterrows():
-            if pd.notna(row["marks"]) and row["marks"] > 0 and (pd.isna(row["grade"]) or row["grade"] == ""):
-                m = row["marks"]
-                if m >= 90: edited_df.at[idx, "grade"] = "A+"
-                elif m >= 80: edited_df.at[idx, "grade"] = "A"
-                elif m >= 75: edited_df.at[idx, "grade"] = "A-"
-                elif m >= 70: edited_df.at[idx, "grade"] = "B+"
-                elif m >= 65: edited_df.at[idx, "grade"] = "B"
-                elif m >= 60: edited_df.at[idx, "grade"] = "B-"
-                elif m >= 55: edited_df.at[idx, "grade"] = "C+"
-                elif m >= 50: edited_df.at[idx, "grade"] = "C"
-                elif m >= 45: edited_df.at[idx, "grade"] = "C-"
-                elif m >= 40: edited_df.at[idx, "grade"] = "D"
-                else: edited_df.at[idx, "grade"] = "E"
 
         if st.button(f"💾 Save {sem['name']}", key=f"save_{sem['id']}", type="primary"):
             new_courses = edited_df.to_dict("records")
@@ -433,7 +409,7 @@ for i, sem in enumerate(semesters_list):
                 if not c.get("id") or pd.isna(c["id"]):
                     c["id"] = f"c_{datetime.now().timestamp()}_{c['code']}"
                 c["credits"] = float(c["credits"]) if pd.notna(c.get("credits")) else 0.0
-                c["marks"] = float(c["marks"]) if pd.notna(c.get("marks")) else 0.0
+                c["marks"] = 0.0 # Default empty marks since we removed the column
                 c["grade"] = str(c["grade"]) if pd.notna(c.get("grade")) else ""
                 c["ngpa"] = bool(c.get("ngpa", False))
 
