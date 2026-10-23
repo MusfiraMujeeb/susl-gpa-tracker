@@ -7,6 +7,104 @@ import time
 # --- PAGE CONFIG (must be first) ---
 st.set_page_config(page_title="SUSL GPA Tracker", page_icon="🎓", layout="wide")
 
+# --- CUSTOM CSS FOR MODERN UI ---
+st.markdown("""
+<style>
+    /* Global Font & Padding */
+    html, body, [class*="css"] {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+        max-width: 1200px;
+    }
+
+    /* Header Styling */
+    h1 {
+        font-weight: 800;
+        letter-spacing: -1px;
+        color: #1E293B;
+    }
+    
+    /* Metric Cards */
+    div[data-testid="stMetric"] {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        border: 1px solid #F1F5F9;
+        text-align: center;
+        transition: transform 0.2s ease;
+    }
+    div[data-testid="stMetric"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    }
+    div[data-testid="stMetricLabel"] {
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
+        color: #64748B !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    div[data-testid="stMetricValue"] {
+        font-size: 2.2rem !important;
+        font-weight: 800 !important;
+        color: #0F172A !important;
+    }
+
+    /* Classification Banner */
+    .class-banner {
+        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        color: white;
+        padding: 15px 25px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.4);
+        margin: 20px 0;
+    }
+    
+    /* Expanders (Semester Cards) */
+    div[data-testid="stExpander"] {
+        background: white;
+        border-radius: 12px !important;
+        border: 1px solid #E2E8F0 !important;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
+        margin-bottom: 15px !important;
+        overflow: hidden;
+    }
+    div[data-testid="stExpander"] summary {
+        font-weight: 600;
+        color: #1E293B;
+        padding: 10px 15px;
+        background-color: #F8FAFC;
+        border-bottom: 1px solid #E2E8F0;
+    }
+    div[data-testid="stExpander"] summary:hover {
+        background-color: #F1F5F9;
+    }
+
+    /* Buttons */
+    .stButton > button {
+        border-radius: 8px;
+        font-weight: 600;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .stButton > button[kind="primary"] {
+        background-color: #3B82F6;
+        color: white;
+    }
+    .stButton > button[kind="primary"]:hover {
+        background-color: #2563EB;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # --- CONFIGURATION ---
 try:
     SUPABASE_URL = st.secrets["SUPABASE_URL"]
@@ -21,22 +119,16 @@ GRADE_SCALE = {
     "C+": 2.3, "C": 2.0, "C-": 1.7,
     "D": 1.0, "E": 0.0
 }
-YEAR_WEIGHTS = {1: 0.2, 2: 0.3, 3: 0.3, 4: 0.2} # Updated based on handbook
+YEAR_WEIGHTS = {1: 0.2, 2: 0.3, 3: 0.3, 4: 0.2}
 PASS_MIN_GP = 2.0
 
 # --- HELPER: OFFICIAL SUSL CLASSIFICATION ---
 def get_classification(gpa):
-    """Returns the official degree class based on SUSL handbook criteria."""
-    if gpa >= 3.70:
-        return "First Class"
-    elif gpa >= 3.30:
-        return "Second Class (Upper Division)"
-    elif gpa >= 2.70:
-        return "Second Class (Lower Division)"
-    elif gpa >= 2.00:
-        return "Pass"
-    else:
-        return "Not eligible for degree"
+    if gpa >= 3.70: return "First Class"
+    elif gpa >= 3.30: return "Second Class (Upper Division)"
+    elif gpa >= 2.70: return "Second Class (Lower Division)"
+    elif gpa >= 2.00: return "Pass"
+    else: return "Not eligible"
 
 # --- SUPABASE CLIENT ---
 def get_supabase_client():
@@ -60,44 +152,39 @@ def restore_session():
     return None
 
 def sign_out():
-    try:
-        supabase.auth.sign_out()
-    except Exception:
-        pass
+    try: supabase.auth.sign_out()
+    except Exception: pass
     for key in ["session", "supabase_client"]:
         st.session_state.pop(key, None)
     st.rerun()
 
 def show_auth_ui():
-    st.markdown("<h1 style='text-align:center;'>🎓 SUSL GPA Tracker</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center;color:#888;'>BSc (Hons) in Information Systems · Faculty of Computing</p>", unsafe_allow_html=True)
-    st.markdown("---")
-    col1, col2, col3 = st.columns([1, 2, 1])
+    st.markdown("<h1 style='text-align:center; margin-top: 10vh;'>🎓 SUSL GPA Tracker</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center;color:#64748B; font-size: 1.1rem;'>BSc (Hons) in Information Systems · Faculty of Computing</p>", unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
+        st.markdown("<div style='background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-top: 20px;'>", unsafe_allow_html=True)
         tab1, tab2 = st.tabs(["🔑 Login", "✨ Sign Up"])
         with tab1:
             with st.form("login_form"):
                 email = st.text_input("Email", placeholder="you@example.com")
                 password = st.text_input("Password", type="password")
                 if st.form_submit_button("Login", type="primary", use_container_width=True):
-                    if not email or not password:
-                        st.error("Please fill in both fields.")
+                    if not email or not password: st.error("Please fill in both fields.")
                     else:
                         try:
                             response = supabase.auth.sign_in_with_password({"email": email, "password": password})
                             st.session_state.session = response.session
                             st.rerun()
-                        except Exception as e:
-                            st.error(f"❌ Login failed: {e}")
+                        except Exception as e: st.error(f"❌ Login failed: {e}")
         with tab2:
             with st.form("signup_form"):
                 new_email = st.text_input("Email", placeholder="you@example.com", key="signup_email")
-                new_password = st.text_input("Password (min 6 characters)", type="password", key="signup_password")
+                new_password = st.text_input("Password (min 6 chars)", type="password", key="signup_password")
                 if st.form_submit_button("Create Account", type="primary", use_container_width=True):
-                    if not new_email or not new_password:
-                        st.error("Please fill in both fields.")
-                    elif len(new_password) < 6:
-                        st.error("Password must be at least 6 characters.")
+                    if not new_email or not new_password: st.error("Please fill in both fields.")
+                    elif len(new_password) < 6: st.error("Password must be at least 6 characters.")
                     else:
                         try:
                             response = supabase.auth.sign_up({"email": new_email, "password": new_password})
@@ -105,10 +192,9 @@ def show_auth_ui():
                                 st.session_state.session = response.session
                                 st.success("Account created! Welcome 🎉")
                                 st.rerun()
-                            else:
-                                st.success("Account created! Please check your email to confirm, then log in.")
-                        except Exception as e:
-                            st.error(f"❌ Sign up failed: {e}")
+                            else: st.success("Account created! Please check your email to confirm.")
+                        except Exception as e: st.error(f"❌ Sign up failed: {e}")
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # --- AUTH GATE ---
 session = restore_session()
@@ -123,67 +209,47 @@ user_id = user.id
 def load_all_courses():
     for attempt in range(3):
         try:
-            response = (
-                supabase.table("courses")
-                .select("*")
-                .order("year").order("semester_id").order("code")
-                .execute()
-            )
+            response = (supabase.table("courses").select("*").order("year").order("semester_id").order("code").execute())
             return response.data
-        except Exception as e:
-            if attempt < 2:
-                time.sleep(2)
-                continue
-            st.error(f"❌ Error loading data: {e}")
-            return []
+        except Exception:
+            if attempt < 2: time.sleep(2)
+            else: st.error("Error loading data."); return []
 
 def save_all_courses(semesters_data):
     all_courses = []
     for sem in semesters_data:
         for course in sem["courses"]:
             all_courses.append({
-                "id": course["id"],
-                "user_id": user_id,
-                "semester_id": sem["id"],
-                "semester_name": sem["name"],
-                "year": sem["year"],
-                "code": course["code"],
+                "id": course["id"], "user_id": user_id, "semester_id": sem["id"],
+                "semester_name": sem["name"], "year": sem["year"], "code": course["code"],
                 "title": course["title"],
                 "credits": float(course.get("credits", 0)) if pd.notna(course.get("credits")) else 0.0,
                 "marks": float(course.get("marks", 0)) if pd.notna(course.get("marks")) else 0.0,
                 "grade": str(course.get("grade", "")) if pd.notna(course.get("grade")) else "",
                 "ngpa": bool(course.get("ngpa", False))
             })
-    if not all_courses:
-        return
+    if not all_courses: return
     for attempt in range(3):
         try:
             supabase.table("courses").delete().eq("user_id", user_id).execute()
             time.sleep(0.5)
-            batch_size = 20
-            for i in range(0, len(all_courses), batch_size):
-                supabase.table("courses").insert(all_courses[i:i + batch_size]).execute()
+            for i in range(0, len(all_courses), 20):
+                supabase.table("courses").insert(all_courses[i:i + 20]).execute()
                 time.sleep(0.3)
             return
-        except Exception as e:
-            if attempt < 2:
-                time.sleep(2)
-                continue
-            st.error(f"❌ Error saving data: {e}")
+        except Exception:
+            if attempt < 2: time.sleep(2)
+            else: st.error("Error saving data.")
 
 def seed_database_for_user():
     try:
         response = supabase.table("courses").select("id").limit(1).execute()
-        if len(response.data) > 0:
-            return
-    except Exception:
-        pass
+        if len(response.data) > 0: return
+    except Exception: pass
 
     def C(cid, code, title, credits, ngpa=False):
-        return {"id": cid, "code": code, "title": title,
-                "credits": credits, "marks": 0, "grade": "", "ngpa": ngpa}
+        return {"id": cid, "code": code, "title": title, "credits": credits, "marks": 0, "grade": "", "ngpa": ngpa}
 
-    # (The full seed data list remains the same as before)
     default_sems = [
         {"id": "sem1", "name": "Year 1 — Semester 1", "year": 1, "courses": [
             C("c1","IS1101","Fundamentals of Information Systems",2), C("c2","IS1102","Structured Programming Techniques",2),
@@ -224,15 +290,13 @@ def seed_database_for_user():
             C("c46","IS5107","Project Management Practicum",1), C("c47","IS5108","Business Intelligence",2),
             C("c48","IS5109","IS Project for Community",1), C("n8","IS-EBP3101","Business English",2,ngpa=True),
         ]},
-        {"id":"sem6","name":"Year 3 — Semester 2","year":3,"courses":[
-            C("c49","IS6101","Industrial Training",6),
-        ]},
-        {"id":"sem7","name":"Year 4 — Semester 1","year":4,"courses":[
+        {"id":"sem6","name": "Year 3 — Semester 2","year":3,"courses":[C("c49","IS6101","Industrial Training",6)]},
+        {"id":"sem7","name": "Year 4 — Semester 1","year":4,"courses":[
             C("c50","IS7101","Research Methodologies",2), C("c51","IS7102","IT Law",1),
             C("c52","IS7103","Business Process Simulation",2), C("c53","IS7104","Enterprise Modelling Ontologies",2),
             C("c54","IS7105","Organizational Behavior & Management",1), C("c55","IS7106","Cloud Computing",2),
         ]},
-        {"id":"sem8","name":"Year 4 — Semester 2","year":4,"courses":[
+        {"id":"sem8","name": "Year 4 — Semester 2","year":4,"courses":[
             C("c56","IS8101","Research Project in IS",8), C("c57","IS8102","Business/IT Alignment",2),
             C("c58","IS8103","Human Resource Management",2), C("c59","IS8104","Scientific Communication",1),
             C("c60","IS8105","IS Economics",2), C("c61","IS8106","Computer System Security",2),
@@ -242,20 +306,15 @@ def seed_database_for_user():
 
 # --- CALCULATIONS ---
 def calculate_gpa(courses):
-    total_points = 0
-    gpa_credits = 0
-    earned_credits = 0
+    total_points = 0; gpa_credits = 0; earned_credits = 0
     for c in courses:
         cr = float(c.get("credits", 0))
         grade = c.get("grade", "")
         ngpa = c.get("ngpa", False)
-        if not grade or ngpa:
-            continue
+        if not grade or ngpa: continue
         gp = GRADE_SCALE.get(grade, 0.0)
-        if gp >= PASS_MIN_GP:
-            earned_credits += cr
-        gpa_credits += cr
-        total_points += gp * cr
+        if gp >= PASS_MIN_GP: earned_credits += cr
+        gpa_credits += cr; total_points += gp * cr
     gpa = total_points / gpa_credits if gpa_credits > 0 else 0.0
     return gpa, gpa_credits, earned_credits, total_points
 
@@ -265,20 +324,15 @@ def calculate_fgpa(semesters):
     for sem in semesters:
         year = sem["year"]
         for c in sem["courses"]:
-            if not c.get("grade") or c.get("ngpa"):
-                continue
+            if not c.get("grade") or c.get("ngpa"): continue
             cr = float(c.get("credits", 0))
             gp = GRADE_SCALE.get(c["grade"], 0.0)
-            year_points[year] += gp * cr
-            year_credits[year] += cr
-    total_weighted = 0
-    total_weight = 0
+            year_points[year] += gp * cr; year_credits[year] += cr
+    total_weighted = 0; total_weight = 0
     for y in [1, 2, 3, 4]:
         if year_credits[y] > 0:
             y_gpa = year_points[y] / year_credits[y]
-            w = YEAR_WEIGHTS[y]
-            total_weighted += y_gpa * w
-            total_weight += w
+            total_weighted += y_gpa * YEAR_WEIGHTS[y]; total_weight += YEAR_WEIGHTS[y]
     return total_weighted / total_weight if total_weight > 0 else 0.0
 
 # --- MAIN APP ---
@@ -289,36 +343,27 @@ semesters_dict = {}
 for course in all_courses:
     sid = course["semester_id"]
     if sid not in semesters_dict:
-        semesters_dict[sid] = {
-            "id": sid, "name": course["semester_name"],
-            "year": course["year"], "courses": []
-        }
+        semesters_dict[sid] = {"id": sid, "name": course["semester_name"], "year": course["year"], "courses": []}
     semesters_dict[sid]["courses"].append(course)
-
 semesters_list = sorted(semesters_dict.values(), key=lambda s: (s["year"], s["id"]))
 
 # --- HEADER ---
-col_a, col_b = st.columns([3, 1])
+col_a, col_b = st.columns([4, 1])
 with col_a:
-    st.title("🎓 SUSL GPA Tracker")
-    st.caption(f"Signed in as **{user.email}**")
+    st.markdown(f"<h1>🎓 SUSL GPA Tracker</h1>", unsafe_allow_html=True)
+    st.markdown(f"<p style='color:#64748B; font-size:1.1rem; margin-top:-10px;'>Signed in as <b>{user.email}</b></p>", unsafe_allow_html=True)
 with col_b:
-    if st.button("🚪 Sign Out"):
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("🚪 Sign Out", use_container_width=True):
         sign_out()
 
 # --- METRICS ---
-total_points = 0
-total_gpa_credits = 0
-total_earned = 0
-pending = 0
+total_points = 0; total_gpa_credits = 0; total_earned = 0; pending = 0
 for sem in semesters_list:
     _, gpa_cr, earned, pts = calculate_gpa(sem["courses"])
-    total_points += pts
-    total_gpa_credits += gpa_cr
-    total_earned += earned
+    total_points += pts; total_gpa_credits += gpa_cr; total_earned += earned
     for c in sem["courses"]:
-        if not c.get("grade") and not c.get("ngpa"):
-            pending += 1
+        if not c.get("grade") and not c.get("ngpa"): pending += 1
 
 running_gpa = total_points / total_gpa_credits if total_gpa_credits > 0 else 0.0
 fgpa = calculate_fgpa(semesters_list)
@@ -326,23 +371,23 @@ fgpa_class = get_classification(fgpa)
 
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("Running GPA", f"{running_gpa:.2f}")
-c2.metric("Final GPA (FGPA)", f"{fgpa:.2f}", help=f"Projected Class: {fgpa_class}")
+c2.metric("Final GPA (FGPA)", f"{fgpa:.2f}")
 c3.metric("Earned Credits", f"{total_earned:.1f}")
 c4.metric("Pending Results", pending)
 
 # Show the FGPA classification prominently
 if fgpa > 0:
-    st.success(f"🎓 **Projected Degree Classification:** {fgpa_class} (FGPA: {fgpa:.2f})")
+    st.markdown(f"<div class='class-banner'>🎓 Projected Degree Classification: {fgpa_class} (FGPA: {fgpa:.2f})</div>", unsafe_allow_html=True)
 
-st.divider()
+st.markdown("<br>", unsafe_allow_html=True)
 
 # --- SEMESTER EDITORS ---
 for i, sem in enumerate(semesters_list):
     sem_gpa, sem_cr, _, _ = calculate_gpa(sem["courses"])
     sem_class = get_classification(sem_gpa) if sem_cr > 0 else "N/A"
     
-    # Include the classification in the expander label
-    label = f"📘 {sem['name']} — GPA: {sem_gpa:.2f} ({sem_class}) · Credits: {sem_cr:.1f}"
+    # Formatting the expander label beautifully
+    label = f"📘 {sem['name']}  |  GPA: {sem_gpa:.2f} ({sem_class})  |  Credits: {sem_cr:.1f}"
     
     with st.expander(label, expanded=(i < 2)):
         df = pd.DataFrame(sem["courses"])
@@ -359,9 +404,7 @@ for i, sem in enumerate(semesters_list):
                 "title": st.column_config.TextColumn("Course Name", width="large"),
                 "credits": st.column_config.NumberColumn("Credits", min_value=0, step=0.5, width="small"),
                 "marks": st.column_config.NumberColumn("Marks", min_value=0, max_value=100, width="small"),
-                "grade": st.column_config.SelectboxColumn("Grade",
-                    options=["", "A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D", "E", "P"],
-                    width="small"),
+                "grade": st.column_config.SelectboxColumn("Grade", options=["", "A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D", "E", "P"], width="small"),
                 "ngpa": st.column_config.CheckboxColumn("NGPA", width="small"),
             },
             key=f"editor_{sem['id']}",
